@@ -1,7 +1,5 @@
 # Monkey Chess Engine
 
-![Chessboard](chessboard.png)
-
 Monkey Chess Engine is a simple chess engine programmed in C that allows you to play chess and test your skills against a computer opponent. It's a fun and educational project for chess enthusiasts, programmers, and anyone interested in the game of chess.
 
 ## Features
@@ -36,7 +34,7 @@ To get started with Monkey Chess Engine, follow these simple steps:
 4. Start a new game:
 
    ```bash
-   ./monkey-chess-engine
+   ./build/monkey-chess-engine
    ```
 
 5. Follow the on-screen instructions to play against the computer opponent.
