@@ -6,7 +6,7 @@ Monkey Chess Engine is a simple chess engine programmed in C that allows you to 
 
 - Full chess rules compliance, including castling, en passant, and pawn promotion.
 - Alpha-beta pruning with basic evaluation functions for game tree searching.
-- Command-line interface for playing chess and testing the engine.
+- Full interactable GUI with tons of settings
 - Easy-to-compile with a simple `make` command.
 
 ## Getting Started
