@@ -1,1 +1,1 @@
-# chess-engine
+# monkey-chess-engine
