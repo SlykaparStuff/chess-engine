@@ -41,13 +41,11 @@ To get started with Monkey Chess Engine, follow these simple steps:
 
 ## Usage
 
-Monkey Chess Engine provides a basic command-line interface for playing chess. Here are some of the commands you can use during a game:
-
-- `help`: Display the list of available commands.
-- `board`: Display the current state of the chessboard.
-- `move <from> <to>`: Make a move using algebraic notation (e.g., `e2 e4`).
-- `new`: Start a new game.
-- `quit`: Quit the game.
+Monkey Chess Engine provides tons of exclusive features. To play:
+   1. Select wether you like to play against the engine or someone else local.
+   2. Start the game.
+   3. Select your prefered board style
+   4. Have fun!
 
 ## Contributing
 
