@@ -3,6 +3,7 @@
 #	./build/monkey-chess-engine
 
 build: src/main.c src/game.h src/game.c
+	mkdir build
 	gcc -o monkey-chess-engine src/main.c src/game.c `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image
 	mv monkey-chess-engine build/monkey-chess-engine
 
