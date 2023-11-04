@@ -9,6 +9,7 @@ void cleanup(Game* game);
 
 void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width, int height)
 {
+  // Sets all game variables
   game->width = width;
   game->height = height;
   game->running = true;
@@ -29,6 +30,7 @@ void update(Game* game)
 {
   while(SDL_PollEvent(&game->event))
   {
+    // Checks for User closing window
     if(game->event.type == SDL_QUIT)
     {
       cleanup(game);
@@ -41,6 +43,7 @@ void render(Game* game)
 {
   SDL_RenderClear(game->renderer);
 
+  // Draws chess board
   for(int x = 0; x < 8; x++)
   {
     for(int y = 0; y < 8; y++)
