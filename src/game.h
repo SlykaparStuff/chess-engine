@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include "pawn.h"
 
 typedef struct
 {
@@ -10,6 +7,7 @@ typedef struct
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Event event;
+  Pawn* pawns[16];
 } Game;
 
 // Initializes the game struct using the parsed in values

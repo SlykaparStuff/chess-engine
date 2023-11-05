@@ -1,7 +1,7 @@
 #include "game.h"
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 512
+#define HEIGHT 512
 
 int init(SDL_Window** window, SDL_Renderer** renderer);
 void cleanup(SDL_Window** window, SDL_Renderer** renderer);
@@ -11,12 +11,18 @@ int main(int argc, char** argv)
   SDL_Window* window;
   SDL_Renderer* renderer;
   Game game;
+  Pawn pawns[16];
 
   if(init(&window, &renderer))
   {
-    exit(-1);
+    return -1;
   }
   
+  for(int i = 0; i < 16; i++)
+  {
+    game.pawns[i] = &pawns[i];
+  }
+
   game_init(&game, window, renderer, WIDTH, HEIGHT);
   game_mainloop(&game);
 
@@ -37,8 +43,10 @@ int init(SDL_Window** window, SDL_Renderer** renderer)
     printf("SDL Window Error! Error Code: %s\n", SDL_GetError());
     return -1;
   }
+  //SDL_SetWindowBordered(*window, false);
 
-  *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_ACCELERATED);
+
+  *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_ACCELERATED);
   if(!*renderer)
   {
     printf("SDL Renderer Error! Error Code: %s\n", SDL_GetError());
