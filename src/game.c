@@ -15,8 +15,6 @@ void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width
   game->running = true;
   game->window = window;
   game->renderer = renderer;
-
-  pawn_init(game->renderer, game->pawns, 16);
 }
 
 void game_mainloop(Game* game)
@@ -61,14 +59,6 @@ void render(Game* game)
 
       SDL_RenderFillRect(game->renderer, &rect);
     }
-  }
-
-  // Renders 16 pawns
-  for(int i = 0; i < 16; i++)
-  {
-    SDL_Rect rect = (SDL_Rect){ game->pawns[i]->x * BOARD_SQUARE_WIDTH, game->pawns[i]->y * BOARD_SQUARE_HEIGHT,
-      BOARD_SQUARE_WIDTH, BOARD_SQUARE_HEIGHT };
-    SDL_RenderCopy(game->renderer, game->pawns[i]->img, NULL, &rect);
   }
 
   SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);

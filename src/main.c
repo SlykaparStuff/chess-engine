@@ -11,18 +11,12 @@ int main(int argc, char** argv)
   SDL_Window* window;
   SDL_Renderer* renderer;
   Game game;
-  Pawn pawns[16];
 
   if(init(&window, &renderer))
   {
     return -1;
   }
   
-  for(int i = 0; i < 16; i++)
-  {
-    game.pawns[i] = &pawns[i];
-  }
-
   game_init(&game, window, renderer, WIDTH, HEIGHT);
   game_mainloop(&game);
 
