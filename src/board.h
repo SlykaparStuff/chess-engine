@@ -9,9 +9,6 @@
 #define u32 uint32_t
 #define u64 uint64_t
 
-#define WHITE 0
-#define BLACK 1
-
 enum enumSquare {
   a1, b1, c1, d1, e1, f1, g1, h1,
   a2, b2, c2, d2, e2, f2, g2, h2,
@@ -48,4 +45,7 @@ typedef struct
   u64 bb_piece[14];
   u64 bb_empty;
   u64 bb_occupied;
+  SDL_Texture* img;
 } Board;
+
+void board_init(Board* board);

@@ -5,6 +5,7 @@
 
 void update(Game* game);
 void render(Game* game);
+void render_pieces(Game* game);
 void cleanup(Game* game);
 
 void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width, int height)
@@ -15,6 +16,8 @@ void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width
   game->running = true;
   game->window = window;
   game->renderer = renderer;
+  board_init(game->board);
+  game->board->img = IMG_LoadTexture(game->renderer, "assets/pawn/white.png");
 }
 
 void game_mainloop(Game* game)
@@ -61,8 +64,26 @@ void render(Game* game)
     }
   }
 
+  render_pieces(game);
+
   SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
   SDL_RenderPresent(game->renderer);
+}
+
+void render_pieces(Game* game)
+{
+    for (int rank = 0; rank < 8; rank++) {
+      for (int file = 0; file < 8; file++) {
+        int square = rank * 8 + file;
+        uint64_t mask = 1ULL << square;
+        if (game->board->bb_piece[bb_piece_white_pawn] & mask) {
+          SDL_Rect rect = (SDL_Rect){ file * BOARD_SQUARE_WIDTH, rank * BOARD_SQUARE_HEIGHT,
+          BOARD_SQUARE_WIDTH, BOARD_SQUARE_HEIGHT };
+
+          SDL_RenderCopy(game->renderer, game->board->img, NULL, &rect);
+        }
+      }
+    }
 }
 
 void cleanup(Game* game)

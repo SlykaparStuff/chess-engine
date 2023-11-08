@@ -7,7 +7,7 @@ typedef struct
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Event event;
-  Board board;
+  Board* board;
 } Game;
 
 // Initializes the game struct using the parsed in values
