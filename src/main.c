@@ -41,7 +41,6 @@ int init(SDL_Window** window, SDL_Renderer** renderer)
   }
   //SDL_SetWindowBordered(*window, false);
 
-
   *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_ACCELERATED);
   if(!*renderer)
   {

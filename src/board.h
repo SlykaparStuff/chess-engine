@@ -1,5 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -45,7 +48,6 @@ typedef struct
   u64 bb_piece[14];
   u64 bb_empty;
   u64 bb_occupied;
-  SDL_Texture* img;
 } Board;
 
 void board_init(Board* board);
