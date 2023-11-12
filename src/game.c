@@ -22,8 +22,8 @@ void update(Game* game);
 void render(Game* game);
 void render_pieces(Game* game);
 void init_textures(Game* game);
-u64 set_bit(u64 number, int x, int y, bool set);
-u64 move_piece(u64 number, int xFrom, int yFrom, int xTo, int yTo);
+u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white);
+u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, bool white);
 void cleanup(Game* game);
 
 void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width, int height)
@@ -34,6 +34,10 @@ void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width
   game->running = true;
   game->window = window;
   game->renderer = renderer;
+  game->piecePressed = false;
+  game->pieceX = 0;
+  game->pieceY = 0;
+  game->pieceType = 0;
   // init textures
   init_textures(game);
   board_init(game->board);
@@ -50,6 +54,9 @@ void game_mainloop(Game* game)
 
 void update(Game* game)
 {
+  game->board->bb_occupied = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[bb_piece_black];
+  game->board->bb_empty = !game->board->bb_occupied;
+
   while(SDL_PollEvent(&game->event))
   {
     // Checks for User closing window
@@ -59,14 +66,32 @@ void update(Game* game)
       game->running = false;
     } else if(game->event.type == SDL_MOUSEBUTTONDOWN)
     {
-      int x = game->event.motion.x;
-      int y = game->event.motion.y;
-      x /= BOARD_SQUARE_WIDTH;
-      y /= BOARD_SQUARE_HEIGHT;
-      printf("Mouse pressed on x:%d | y:%d\n", x, y);
-      int square = y * 8 + x;
-      uint64_t mask = 1ULL << square;
-      game->board->bb_piece[bb_piece_white_queen] = move_piece(game->board->bb_piece[bb_piece_white_queen], 4, 7, x, y);
+      int x = game->event.motion.x / BOARD_SQUARE_WIDTH;
+      int y = game->event.motion.y / BOARD_SQUARE_HEIGHT;
+      //printf("Mouse pressed on x:%d | y:%d\n", x, y);
+      if(game->piecePressed)
+      {
+        game->board->bb_piece[game->pieceType] = move_piece(game, game->board->bb_piece[game->pieceType],
+                                                           game->pieceX, game->pieceY, x, y, game->pieceType > 7);
+        game->piecePressed = false;
+        game->pieceType = 0;
+      } else 
+      {
+        u64 mask = (1ULL << (y * 8 + x));
+        if(game->board->bb_occupied & mask)
+        {
+          for(int i = 2; i < 14; i++)
+          {
+            if(game->board->bb_piece[i] & mask)
+            {
+              game->pieceType = i;
+            }
+          }
+          game->piecePressed = true;
+          game->pieceX = x;
+          game->pieceY = y;
+        }
+      }
     }
   }
 }
@@ -187,21 +212,33 @@ void init_textures(Game* game)
   game->img[img_black_king] = IMG_LoadTexture(game->renderer, "assets/king/black.png");
 }
 
-u64 set_bit(u64 number, int x, int y, bool set) {
+u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white) {
   if(set) 
   {
+    if(white)
+    {
+      game->board->bb_piece[bb_piece_white] = game->board->bb_piece[bb_piece_white] | (1ULL << (y * 8 + x));
+    } else {
+      game->board->bb_piece[bb_piece_black] = game->board->bb_piece[bb_piece_black] | (1ULL << (y * 8 + x));
+    }
     // Set the bit to 1
     return number | (1ULL << (y * 8 + x));
   } else {
+    if(white)
+    {
+      game->board->bb_piece[bb_piece_white] = game->board->bb_piece[bb_piece_white] & ~(1ULL << (y * 8 + x));
+    } else {
+      game->board->bb_piece[bb_piece_black] = game->board->bb_piece[bb_piece_black] & ~(1ULL << (y * 8 + x));
+    }
     // Set the bit to 0
     return number & ~(1ULL << (y * 8 + x));
   }
 }
 
-u64 move_piece(u64 number, int xFrom, int yFrom, int xTo, int yTo)
+u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, bool white)
 {
-  u64 ret = set_bit(number, xFrom, yFrom, 0);
-  return set_bit(ret, xTo, yTo, 1);
+  u64 ret = set_bit(game, number, xFrom, yFrom, 0, white);
+  return set_bit(game, ret, xTo, yTo, 1, white);
 }
 
 void cleanup(Game* game)

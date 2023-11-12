@@ -9,6 +9,9 @@ typedef struct
   SDL_Event event;
   Board* board;
   SDL_Texture* img[12];
+  bool piecePressed;
+  int pieceX, pieceY;
+  int pieceType;
 } Game;
 
 // Initializes the game struct using the parsed in values
