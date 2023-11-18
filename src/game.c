@@ -117,6 +117,21 @@ void render(Game* game)
       SDL_RenderFillRect(game->renderer, &rect);
     }
   }
+  
+  if(game->piecePressed)
+  {
+    SDL_Rect rect = (SDL_Rect){ game->pieceX * BOARD_SQUARE_WIDTH, game->pieceY * BOARD_SQUARE_HEIGHT,
+      BOARD_SQUARE_WIDTH, BOARD_SQUARE_HEIGHT };
+    if(game->pieceX % 2 - game->pieceY % 2 != 0)
+    {
+      SDL_SetRenderDrawColor(game->renderer, 100, 111, 64, 255);
+    } else 
+    {
+      SDL_SetRenderDrawColor(game->renderer, 130, 151, 105, 255);
+    }
+    
+    SDL_RenderFillRect(game->renderer, &rect);
+  }
 
   render_pieces(game);
 

@@ -51,3 +51,4 @@ typedef struct
 } Board;
 
 void board_init(Board* board);
+
