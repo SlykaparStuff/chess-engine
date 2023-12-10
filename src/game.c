@@ -25,6 +25,7 @@ void init_textures(Game* game);
 u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white);
 u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, bool white);
 void cleanup(Game* game);
+bool checkValidMove(Game* game, int x, int y);
 
 void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width, int height)
 {
@@ -69,10 +70,14 @@ void update(Game* game)
       int x = game->event.motion.x / BOARD_SQUARE_WIDTH;
       int y = game->event.motion.y / BOARD_SQUARE_HEIGHT;
       //printf("Mouse pressed on x:%d | y:%d\n", x, y);
+
       if(game->piecePressed)
       {
-        game->board->bb_piece[game->pieceType] = move_piece(game, game->board->bb_piece[game->pieceType],
-                                                           game->pieceX, game->pieceY, x, y, game->pieceType > 7);
+        if( checkValidMove(game, x, y))
+        {
+          game->board->bb_piece[game->pieceType] = move_piece(game, game->board->bb_piece[game->pieceType],
+                                                              game->pieceX, game->pieceY, x, y, game->pieceType > 7);
+        }
         game->piecePressed = false;
         game->pieceType = 0;
       } else 
@@ -260,4 +265,146 @@ void cleanup(Game* game)
 {
   SDL_DestroyRenderer(game->renderer);
   SDL_DestroyWindow(game->window);
+}
+
+bool checkValidMove(Game* game, int x, int y)
+{
+  if(game->pieceType == bb_piece_white_pawn)
+  {
+    if(game->board->bb_occupied & (1ULL << (y * 8 + x)))
+      return false;
+
+    if(game->pieceY == 6 && x == game->pieceX && y == game->pieceY - 2)
+    {
+      return true;
+    } else if(x == game->pieceX && y == game->pieceY - 1)
+    {
+      return true;
+    }
+  } else if(game->pieceType == bb_piece_black_pawn)
+  {
+    if(game->board->bb_occupied & (1ULL << (y * 8 + x)))
+      return false;
+
+    if(game->pieceY == 1 && x == game->pieceX && y == game->pieceY + 2)
+    {
+      return true;
+    } else if(x == game->pieceX && y == game->pieceY + 1)
+    {
+      return true;
+    }
+  }
+
+
+  else if(game->pieceType == bb_piece_white_knight || game->pieceType == bb_piece_black_knight)
+  {
+    if(x == game->pieceX - 1 && y == game->pieceY - 2)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY - 2)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY + 2)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY + 2)
+    {
+      return true;
+    } else if(x == game->pieceX - 2 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 2 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 2 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 2 && y == game->pieceY + 1)
+    {
+      return true;
+    }
+  } 
+
+  
+  else if(game->pieceType == bb_piece_white_rook || game->pieceType == bb_piece_black_rook)
+  {
+    if(x == game->pieceX || y == game->pieceY)
+    {
+      return true;
+    }
+  }
+
+
+  else if(game->pieceType == bb_piece_white_bishop || game->pieceType == bb_piece_black_bishop)
+  {
+    for(int i = 0; i < 8; i++)
+    {
+      if(x == game->pieceX + i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX + i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY - i)
+      {
+        return true;
+      }
+    }
+  }
+
+
+  else if(game->pieceType == bb_piece_white_king || game->pieceType == bb_piece_black_king)
+  {
+    if(x == game->pieceX + 1 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if((x + 1 == game->pieceX || x - 1 == game->pieceX) && y == game->pieceY)
+    {
+      return true;
+    } else if((y + 1 == game->pieceY || y - 1 == game->pieceY) && x == game->pieceX)
+    {
+      return true;
+    }
+  }
+
+
+  else if(game->pieceType == bb_piece_white_queen || game->pieceType == bb_piece_black_queen)
+  {
+    for(int i = 0; i < 8; i++)
+    {
+      if(x == game->pieceX + i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX + i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(y == game->pieceY)
+      {
+        return true;
+      } else if(x == game->pieceX)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
