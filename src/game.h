@@ -12,6 +12,7 @@ typedef struct
   bool piecePressed;
   int pieceX, pieceY;
   int pieceType;
+  bool moveTurn; // true is white | false is black
 } Game;
 
 // Initializes the game struct using the parsed in values

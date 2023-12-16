@@ -24,7 +24,6 @@ void render_pieces(Game* game);
 void init_textures(Game* game);
 u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white);
 u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, bool white);
-void cleanup(Game* game);
 bool checkValidMove(Game* game, int x, int y);
 void capturePiece(Game* game, int x, int y, bool white);
 
@@ -40,6 +39,7 @@ void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width
   game->pieceX = 0;
   game->pieceY = 0;
   game->pieceType = 0;
+  game->moveTurn = true;
   // init textures
   init_textures(game);
   board_init(game->board);
@@ -56,15 +56,28 @@ void game_mainloop(Game* game)
 
 void update(Game* game)
 {
-  game->board->bb_occupied = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[bb_piece_black];
-  game->board->bb_empty = !game->board->bb_occupied;
-
   while(SDL_PollEvent(&game->event))
   {
+    game->board->bb_piece[bb_piece_white] = 0;
+    game->board->bb_piece[bb_piece_black] = 0;
+    game->board->bb_occupied = 0;  
+    game->board->bb_empty = 0;
+    
+     for(int i = 2; i <= 7; i++)
+    {
+      game->board->bb_piece[bb_piece_white] = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[i];
+    }
+    for(int i = 8; i <= 13; i++)
+    {
+      game->board->bb_piece[bb_piece_black] = game->board->bb_piece[bb_piece_black] | game->board->bb_piece[i];
+    }
+
+    game->board->bb_occupied = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[bb_piece_black];
+    game->board->bb_empty = ~game->board->bb_occupied;
+
     // Checks for User closing window
     if(game->event.type == SDL_QUIT)
     {
-      cleanup(game);
       game->running = false;
       return;
     } else if(game->event.type == SDL_MOUSEBUTTONDOWN)
@@ -87,6 +100,7 @@ void update(Game* game)
           {
             capturePiece(game, x, y, true);
           }
+          game->moveTurn = !game->moveTurn;
         }
         game->piecePressed = false;
         game->pieceType = 0;
@@ -95,16 +109,25 @@ void update(Game* game)
         u64 mask = (1ULL << (y * 8 + x));
         if(game->board->bb_occupied & mask)
         {
-          for(int i = 2; i < 14; i++)
+          for(int i = 2; i <= 13; i++)
           {
             if(game->board->bb_piece[i] & mask)
             {
               game->pieceType = i;
             }
           }
-          game->piecePressed = true;
-          game->pieceX = x;
-          game->pieceY = y;
+
+          if(game->pieceType <= 7 == game->moveTurn) {
+            game->piecePressed = true;
+            game->pieceX = x;
+            game->pieceY = y;
+          } else 
+          {
+            game->pieceType = 0;
+            game->piecePressed = false;
+            game->pieceX = 0;
+            game->pieceY = 0;
+          }
         }
       }
     }
@@ -251,6 +274,7 @@ u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white) {
     } else {
       game->board->bb_piece[bb_piece_black] = game->board->bb_piece[bb_piece_black] | (1ULL << (y * 8 + x));
     }
+    game->board->bb_occupied = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[bb_piece_black];
     // Set the bit to 1
     return number | (1ULL << (y * 8 + x));
   } else {
@@ -260,6 +284,7 @@ u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white) {
     } else {
       game->board->bb_piece[bb_piece_black] = game->board->bb_piece[bb_piece_black] & ~(1ULL << (y * 8 + x));
     }
+    game->board->bb_occupied = game->board->bb_piece[bb_piece_white] | game->board->bb_piece[bb_piece_black];
     // Set the bit to 0
     return number & ~(1ULL << (y * 8 + x));
   }
@@ -271,17 +296,11 @@ u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, b
   return set_bit(game, ret, xTo, yTo, 1, white);
 }
 
-void cleanup(Game* game)
-{
-  SDL_DestroyRenderer(game->renderer);
-  SDL_DestroyWindow(game->window);
-}
-
 bool checkValidMove(Game* game, int x, int y)
 {
   if(game->pieceType == bb_piece_white_pawn)
   {
-    if(game->board->bb_occupied & (1ULL << (y * 8 + x)))
+    if(game->board->bb_occupied & (1ULL << (y * 8 + x)) && x == game->pieceX)
       return false;
 
     if(game->pieceY == 6 && x == game->pieceX && y == game->pieceY - 2)
@@ -290,10 +309,14 @@ bool checkValidMove(Game* game, int x, int y)
     } else if(x == game->pieceX && y == game->pieceY - 1)
     {
       return true;
+    } else if((x == game->pieceX - 1 || x == game->pieceX + 1) && y == game->pieceY - 1 
+              && (game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
+    {
+      return true;
     }
   } else if(game->pieceType == bb_piece_black_pawn)
   {
-    if(game->board->bb_occupied & (1ULL << (y * 8 + x)))
+    if(game->board->bb_occupied & (1ULL << (y * 8 + x)) && x == game->pieceX)
       return false;
 
     if(game->pieceY == 1 && x == game->pieceX && y == game->pieceY + 2)
@@ -302,11 +325,42 @@ bool checkValidMove(Game* game, int x, int y)
     } else if(x == game->pieceX && y == game->pieceY + 1)
     {
       return true;
+    } else if((x == game->pieceX - 1 || x == game->pieceX + 1) && y == game->pieceY + 1 
+              && (game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+    {
+      return true;
     }
   }
 
-
-  else if(game->pieceType == bb_piece_white_knight || game->pieceType == bb_piece_black_knight)
+  
+  else if(game->pieceType == bb_piece_white_knight && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+  {
+    if(x == game->pieceX - 1 && y == game->pieceY - 2)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY - 2)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY + 2)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY + 2)
+    {
+      return true;
+    } else if(x == game->pieceX - 2 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 2 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 2 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 2 && y == game->pieceY + 1)
+    {
+      return true;
+    }
+  }else if(game->pieceType == bb_piece_black_knight && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
     if(x == game->pieceX - 1 && y == game->pieceY - 2)
     {
@@ -336,7 +390,13 @@ bool checkValidMove(Game* game, int x, int y)
   } 
 
   
-  else if(game->pieceType == bb_piece_white_rook || game->pieceType == bb_piece_black_rook)
+  else if(game->pieceType == bb_piece_white_rook && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+  {
+    if(x == game->pieceX || y == game->pieceY)
+    {
+      return true;
+    }
+  }else if(game->pieceType == bb_piece_black_rook && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
     if(x == game->pieceX || y == game->pieceY)
     {
@@ -345,7 +405,26 @@ bool checkValidMove(Game* game, int x, int y)
   }
 
 
-  else if(game->pieceType == bb_piece_white_bishop || game->pieceType == bb_piece_black_bishop)
+  else if(game->pieceType == bb_piece_white_bishop && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+  {
+    int max;
+    for(int i = 0; i < 8; i++)
+    {
+      if(x == game->pieceX + i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX + i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY - i)
+      {
+        return true;
+      }
+    }
+  }else if(game->pieceType == bb_piece_black_bishop && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
     int max;
     for(int i = 0; i < 8; i++)
@@ -367,7 +446,28 @@ bool checkValidMove(Game* game, int x, int y)
   }
 
 
-  else if(game->pieceType == bb_piece_white_king || game->pieceType == bb_piece_black_king)
+  else if(game->pieceType == bb_piece_white_king && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+  {
+    if(x == game->pieceX + 1 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY + 1)
+    {
+      return true;
+    } else if(x == game->pieceX + 1 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if(x == game->pieceX - 1 && y == game->pieceY - 1)
+    {
+      return true;
+    } else if((x + 1 == game->pieceX || x - 1 == game->pieceX) && y == game->pieceY)
+    {
+      return true;
+    } else if((y + 1 == game->pieceY || y - 1 == game->pieceY) && x == game->pieceX)
+    {
+      return true;
+    }
+  }else if(game->pieceType == bb_piece_black_king && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
     if(x == game->pieceX + 1 && y == game->pieceY + 1)
     {
@@ -391,7 +491,31 @@ bool checkValidMove(Game* game, int x, int y)
   }
 
 
-  else if(game->pieceType == bb_piece_white_queen || game->pieceType == bb_piece_black_queen)
+  else if(game->pieceType == bb_piece_white_queen && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
+  {
+    for(int i = 0; i < 8; i++)
+    {
+      if(x == game->pieceX + i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY + i)
+      {
+        return true;
+      } else if(x == game->pieceX + i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(x == game->pieceX - i && y == game->pieceY - i)
+      {
+        return true;
+      } else if(y == game->pieceY)
+      {
+        return true;
+      } else if(x == game->pieceX)
+      {
+        return true;
+      }
+    }
+  }else if(game->pieceType == bb_piece_black_queen && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
     for(int i = 0; i < 8; i++)
     {
@@ -435,7 +559,7 @@ void capturePiece(Game* game, int x, int y, bool white)
     }
   } else
   {
-    for(int i = 7; i <= 13; i++)
+    for(int i = 8; i <= 13; i++)
     {
       if(game->board->bb_piece[i] & (1ULL << (y * 8 + x)))
       {
@@ -447,5 +571,6 @@ void capturePiece(Game* game, int x, int y, bool white)
   if(!capturePieceType || capturePieceType > 13)
     return;
 
-  game->board->bb_piece[capturePieceType] = game->board->bb_piece[capturePieceType] ^ (1ULL << (y * 8 + x));
+  game->board->bb_piece[capturePieceType] = set_bit(game, game->board->bb_piece[capturePieceType], x, y,
+                                                    false, capturePieceType > 7);
 }

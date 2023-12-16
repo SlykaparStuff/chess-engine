@@ -4,7 +4,7 @@
 #define HEIGHT 512
 
 int init(SDL_Window** window, SDL_Renderer** renderer);
-void cleanup(SDL_Window** window, SDL_Renderer** renderer);
+void cleanup(SDL_Window* window, SDL_Renderer* renderer);
 
 int main(int argc, char** argv)
 {
@@ -22,6 +22,7 @@ int main(int argc, char** argv)
   game_init(&game, window, renderer, WIDTH, HEIGHT);
   game_mainloop(&game);
 
+  cleanup(game.window, game.renderer);
   return 0;
 }
 
@@ -51,3 +52,8 @@ int init(SDL_Window** window, SDL_Renderer** renderer)
   return 0;
 }
 
+void cleanup(SDL_Window* window, SDL_Renderer* renderer)
+{
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+}
