@@ -26,6 +26,7 @@ u64 set_bit(Game* game, u64 number, int x, int y, bool set, bool white);
 u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, bool white);
 void cleanup(Game* game);
 bool checkValidMove(Game* game, int x, int y);
+void capturePiece(Game* game, int x, int y, bool white);
 
 void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width, int height)
 {
@@ -65,6 +66,7 @@ void update(Game* game)
     {
       cleanup(game);
       game->running = false;
+      return;
     } else if(game->event.type == SDL_MOUSEBUTTONDOWN)
     {
       int x = game->event.motion.x / BOARD_SQUARE_WIDTH;
@@ -73,10 +75,18 @@ void update(Game* game)
 
       if(game->piecePressed)
       {
-        if( checkValidMove(game, x, y))
+        if(checkValidMove(game, x, y))
         {
           game->board->bb_piece[game->pieceType] = move_piece(game, game->board->bb_piece[game->pieceType],
-                                                              game->pieceX, game->pieceY, x, y, game->pieceType > 7);
+                                                              game->pieceX, game->pieceY, x, y, game->pieceType < 7);
+
+          if(game->pieceType < 7 && ((1ULL << (y * 8 + x)) & game->board->bb_piece[bb_piece_black]))
+          {
+            capturePiece(game, x, y, false);
+          } else if(game->pieceType > 7 && ((1ULL << (y * 8 + x)) & game->board->bb_piece[bb_piece_white]))
+          {
+            capturePiece(game, x, y, true);
+          }
         }
         game->piecePressed = false;
         game->pieceType = 0;
@@ -337,6 +347,7 @@ bool checkValidMove(Game* game, int x, int y)
 
   else if(game->pieceType == bb_piece_white_bishop || game->pieceType == bb_piece_black_bishop)
   {
+    int max;
     for(int i = 0; i < 8; i++)
     {
       if(x == game->pieceX + i && y == game->pieceY + i)
@@ -407,4 +418,34 @@ bool checkValidMove(Game* game, int x, int y)
   }
 
   return false;
+}
+
+void capturePiece(Game* game, int x, int y, bool white)
+{
+  int capturePieceType;
+
+  if(white)
+  {
+    for(int i = 2; i <= 7; i++)
+    {
+      if(game->board->bb_piece[i] & (1ULL << (y * 8 + x)))
+      {
+        capturePieceType = i;
+      }
+    }
+  } else
+  {
+    for(int i = 7; i <= 13; i++)
+    {
+      if(game->board->bb_piece[i] & (1ULL << (y * 8 + x)))
+      {
+        capturePieceType = i;
+      }
+    }
+  }
+
+  if(!capturePieceType || capturePieceType > 13)
+    return;
+
+  game->board->bb_piece[capturePieceType] = game->board->bb_piece[capturePieceType] ^ (1ULL << (y * 8 + x));
 }

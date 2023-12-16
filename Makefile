@@ -3,7 +3,7 @@ run: build
 	./build/monkey-chess-engine
 
 build: src/*
-	gcc -o monkey-chess-engine src/* `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image
+	gcc -o monkey-chess-engine src/* -g `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image
 	mv monkey-chess-engine build/monkey-chess-engine
 
 build_win32: src/*
