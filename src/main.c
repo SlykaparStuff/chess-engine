@@ -11,14 +11,12 @@ int main(int argc, char** argv)
   SDL_Window* window;
   SDL_Renderer* renderer;
   Game game;
-  Board board;
 
   if(init(&window, &renderer))
   {
     return -1;
   }
   
-  game.board = &board;
   game_init(&game, window, renderer, WIDTH, HEIGHT);
   game_mainloop(&game);
 

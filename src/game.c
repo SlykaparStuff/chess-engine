@@ -40,6 +40,7 @@ void game_init(Game* game, SDL_Window* window, SDL_Renderer* renderer, int width
   game->pieceY = 0;
   game->pieceType = 0;
   game->moveTurn = true;
+  game->board = malloc(sizeof(Board));
   // init textures
   init_textures(game);
   board_init(game->board);
@@ -298,6 +299,9 @@ u64 move_piece(Game* game, u64 number, int xFrom, int yFrom, int xTo, int yTo, b
 
 bool checkValidMove(Game* game, int x, int y)
 {
+  int to = (y * 8 + x);
+  int from = (game->pieceY * 8 + game->pieceX);
+
   if(game->pieceType == bb_piece_white_pawn)
   {
     if(game->board->bb_occupied & (1ULL << (y * 8 + x)) && x == game->pieceX)
@@ -392,57 +396,99 @@ bool checkValidMove(Game* game, int x, int y)
   
   else if(game->pieceType == bb_piece_white_rook && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
   {
-    if(x == game->pieceX || y == game->pieceY)
-    {
-      return true;
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_white_rook] & (1ULL << to))) {
+      // Check if move is along a rank or file
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == 0 || deltaRank == 0) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : (to % BOARD_SIZE < from % BOARD_SIZE) ? -1 : 0;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : (to / BOARD_SIZE < from / BOARD_SIZE) ? -BOARD_SIZE : 0;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+        }
+        return true;
+      }
     }
+    return false;
   }else if(game->pieceType == bb_piece_black_rook && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
-    if(x == game->pieceX || y == game->pieceY)
-    {
-      return true;
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_black_rook] & (1ULL << to))) {
+      // Check if move is along a rank or file
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == 0 || deltaRank == 0) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : (to % BOARD_SIZE < from % BOARD_SIZE) ? -1 : 0;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : (to / BOARD_SIZE < from / BOARD_SIZE) ? -BOARD_SIZE : 0;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+        }
+        return true;
+      }
     }
+    return false;
   }
 
 
   else if(game->pieceType == bb_piece_white_bishop && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
   {
-    int max;
-    for(int i = 0; i < 8; i++)
-    {
-      if(x == game->pieceX + i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX + i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY - i)
-      {
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_white_bishop] & (1ULL << to))) {
+      // Check if move is along a diagonal
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == deltaRank) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : -1;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : -BOARD_SIZE;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+        }
         return true;
       }
     }
+    return false;
   }else if(game->pieceType == bb_piece_black_bishop && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
-    int max;
-    for(int i = 0; i < 8; i++)
-    {
-      if(x == game->pieceX + i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX + i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY - i)
-      {
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_black_bishop] & (1ULL << to))) {
+      // Check if move is along a diagonal
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == deltaRank) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : -1;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : -BOARD_SIZE;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+        }
         return true;
       }
     }
+    return false;
   }
 
 
@@ -493,52 +539,55 @@ bool checkValidMove(Game* game, int x, int y)
 
   else if(game->pieceType == bb_piece_white_queen && !(game->board->bb_piece[bb_piece_white] & (1ULL << (y * 8 + x))))
   {
-    for(int i = 0; i < 8; i++)
-    {
-      if(x == game->pieceX + i && y == game->pieceY + i)
-      {
+    
+
+
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_white_queen] & (1ULL << to))) {
+      // Check if move is along a rank, file, or diagonal
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == 0 || deltaRank == 0 || deltaFile == deltaRank) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : (to % BOARD_SIZE < from % BOARD_SIZE) ? -1 : 0;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : (to / BOARD_SIZE < from / BOARD_SIZE) ? -BOARD_SIZE              : 0;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+          }
+
         return true;
-      } else if(x == game->pieceX - i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX + i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(y == game->pieceY)
-      {
-        return true;
-      } else if(x == game->pieceX)
-      {
-        return true;
-      }
+        }
     }
-  }else if(game->pieceType == bb_piece_black_queen && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
+    return false;
+  } else if(game->pieceType == bb_piece_black_queen && !(game->board->bb_piece[bb_piece_black] & (1ULL << (y * 8 + x))))
   {
-    for(int i = 0; i < 8; i++)
-    {
-      if(x == game->pieceX + i && y == game->pieceY + i)
-      {
+    if (to >= 0 && to < BOARD_SIZE * BOARD_SIZE && !(game->board->bb_piece[bb_piece_black_queen] & (1ULL << to))) {
+      // Check if move is along a rank, file, or diagonal
+      int deltaFile = abs(to % BOARD_SIZE - from % BOARD_SIZE);
+      int deltaRank = abs(to / BOARD_SIZE - from / BOARD_SIZE);
+
+      if (deltaFile == 0 || deltaRank == 0 || deltaFile == deltaRank) {
+        // Check if squares between from and to are empty
+        int dirFile = (to % BOARD_SIZE > from % BOARD_SIZE) ? 1 : (to % BOARD_SIZE < from % BOARD_SIZE) ? -1 : 0;
+        int dirRank = (to / BOARD_SIZE > from / BOARD_SIZE) ? BOARD_SIZE : (to / BOARD_SIZE < from / BOARD_SIZE) ? -BOARD_SIZE              : 0;
+
+        int currentSquare = from + dirRank + dirFile;
+        while (currentSquare != to) {
+          if (game->board->bb_occupied & (1ULL << currentSquare)) {
+            return false; // There is an obstruction
+          }
+          currentSquare += dirRank + dirFile;
+          }
+
         return true;
-      } else if(x == game->pieceX - i && y == game->pieceY + i)
-      {
-        return true;
-      } else if(x == game->pieceX + i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(x == game->pieceX - i && y == game->pieceY - i)
-      {
-        return true;
-      } else if(y == game->pieceY)
-      {
-        return true;
-      } else if(x == game->pieceX)
-      {
-        return true;
-      }
+        }
     }
+    return false;
   }
 
   return false;
